@@ -7,6 +7,12 @@
     android:layout_height="match_parent">
 
     <EditText
+        android:id="@+id/nameInput"
+        android:hint="Име"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
         android:id="@+id/emailInput"
         android:hint="Email"
         android:layout_width="match_parent"
@@ -14,20 +20,32 @@
 
     <EditText
         android:id="@+id/passwordInput"
-        android:hint="Password"
+        android:hint="Парола"
         android:inputType="textPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <Button
-        android:id="@+id/loginButton"
-        android:text="Вход"
+    <EditText
+        android:id="@+id/phoneInput"
+        android:hint="Телефон"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/universityInput"
+        android:hint="Университет"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
     <Button
-        android:id="@+id/goToRegisterButton"
-        android:text="Нямаш акаунт? Регистрация"
+        android:id="@+id/registerButton"
+        android:text="Регистрация"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/goToLoginButton"
+        android:text="Имаш акаунт? Вход"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
