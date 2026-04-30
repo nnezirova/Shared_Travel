@@ -1,11 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.example.sharedtravel"
-    compileSdk = 35 // <--- ТОВА БЕШЕ ГРЕШКАТА. Сега е оправено.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.sharedtravel"
@@ -29,6 +30,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
