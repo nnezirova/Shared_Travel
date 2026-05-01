@@ -6,6 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.sharedtravel.R
 import com.example.sharedtravel.viewmodel.AuthViewModel
 import android.content.Intent
+import androidx.lifecycle.lifecycleScope
+import com.example.sharedtravel.viewmodel.AuthState
+import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -17,6 +20,8 @@ class RegisterActivity : AppCompatActivity() {
         setContentView(R.layout.activity_register)
 
         viewModel = AuthViewModel()
+
+        observeViewModel()
 
         val nameInput = findViewById<EditText>(R.id.nameInput)
         val emailInput = findViewById<EditText>(R.id.emailInput)
@@ -40,12 +45,26 @@ class RegisterActivity : AppCompatActivity() {
             val phone = phoneInput.text.toString()
             val university = universityInput.text.toString()
 
-            viewModel.register(email, password) { success, message ->
+            viewModel.registerUser(email, password)
+        }
+    }
 
-                if (success) {
-                    Toast.makeText(this, "Успешна регистрация!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, message ?: "Грешка", Toast.LENGTH_SHORT).show()
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            viewModel.authState.collect { state ->
+                when (state) {
+                    is AuthState.Loading -> {
+                        // Show progress
+                    }
+                    is AuthState.Success -> {
+                        Toast.makeText(this@RegisterActivity, "Успешна регистрация!", Toast.LENGTH_SHORT).show()
+                        finish() // Or go to home
+                    }
+                    is AuthState.Error -> {
+                        Toast.makeText(this@RegisterActivity, state.message, Toast.LENGTH_SHORT).show()
+                        viewModel.resetState()
+                    }
+                    else -> {}
                 }
             }
         }
