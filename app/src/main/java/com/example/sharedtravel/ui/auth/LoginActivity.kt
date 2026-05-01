@@ -9,6 +9,9 @@ import com.example.sharedtravel.R
 import com.example.sharedtravel.viewmodel.AuthViewModel
 import android.content.Intent
 import com.example.sharedtravel.ui.home.HomeActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.sharedtravel.viewmodel.AuthState
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
@@ -19,6 +22,8 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         viewModel = AuthViewModel()
+
+        observeViewModel()
 
         val emailInput = findViewById<EditText>(R.id.emailInput)
         val passwordInput = findViewById<EditText>(R.id.passwordInput)
@@ -33,20 +38,30 @@ class LoginActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
-
             val email = emailInput.text.toString()
             val password = passwordInput.text.toString()
+            viewModel.loginUser(email, password)
+        }
+    }
 
-            viewModel.login(email, password) { success, message ->
-
-                if (success) {
-                    Toast.makeText(this, "Успешен вход!", Toast.LENGTH_SHORT).show()
-
-                    val intent = Intent(this, HomeActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                } else {
-                    Toast.makeText(this, message ?: "Грешка", Toast.LENGTH_SHORT).show()
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            viewModel.authState.collect { state ->
+                when (state) {
+                    is AuthState.Loading -> {
+                        // Show progress bar if you have one
+                    }
+                    is AuthState.Success -> {
+                        Toast.makeText(this@LoginActivity, "Успешен вход!", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
+                    is AuthState.Error -> {
+                        Toast.makeText(this@LoginActivity, state.message, Toast.LENGTH_SHORT).show()
+                        viewModel.resetState()
+                    }
+                    else -> {}
                 }
             }
         }
