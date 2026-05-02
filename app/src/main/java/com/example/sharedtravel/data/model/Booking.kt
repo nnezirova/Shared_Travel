@@ -17,6 +17,7 @@ data class Booking(
     val id: String = "",
     val tripId: String = "",
     val passengerId: String = "",
+    val driverId: String = "",
     val seatsBooked: Int = 0,
     val timestamp: Long = System.currentTimeMillis(),
     val status: BookingStatus = BookingStatus.PENDING
