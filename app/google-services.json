@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "863937091007",
+    "project_id": "shared-travel-cc0ba",
+    "storage_bucket": "shared-travel-cc0ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863937091007:android:e5c6e3ddc76506e0207d0a",
+        "android_client_info": {
+          "package_name": "com.example.sharedtravel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXOfyMiePxNLnuFuYxV3qFexmkfzHe5hY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

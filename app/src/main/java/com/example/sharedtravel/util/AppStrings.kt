@@ -18,9 +18,9 @@ enum class StringKey {
     PER_SEAT_LABEL, DRIVING_SINCE_FORMAT, BOOKING_SUCCESS,
     
     // Requests / Dashboard
-    DRIVER_DASHBOARD_TITLE, ACTIVE_TRIPS_LABEL, NO_TRIPS_CREATED, FINISH_TRIP_BUTTON,
+    DRIVER_DASHBOARD_TITLE, ACTIVE_TRIPS_LABEL, NO_TRIPS_CREATED, FINISH_TRIP_BUTTON, CANCEL_TRIP_BUTTON,
     BOOKING_REQUESTS_LABEL, NO_PENDING_REQUESTS, PASSENGER_ID_LABEL, SEATS_REQUESTED_LABEL,
-    STATUS_LABEL, APPROVE_BUTTON, REJECT_BUTTON,
+    STATUS_LABEL, APPROVE_BUTTON, REJECT_BUTTON, TRIP_CANCELLED_SUCCESS,
     
     // Bookings
     MY_BOOKINGS_TITLE, NO_BOOKINGS_YET, RATE_DRIVER_BUTTON, ALREADY_RATED_LABEL,
@@ -81,6 +81,7 @@ object AppStrings {
         StringKey.ACTIVE_TRIPS_LABEL to "Active Trips",
         StringKey.NO_TRIPS_CREATED to "No trips created yet.",
         StringKey.FINISH_TRIP_BUTTON to "Finish Trip",
+        StringKey.CANCEL_TRIP_BUTTON to "Cancel Trip",
         StringKey.BOOKING_REQUESTS_LABEL to "Booking Requests",
         StringKey.NO_PENDING_REQUESTS to "No pending requests",
         StringKey.PASSENGER_ID_LABEL to "Passenger ID: %s",
@@ -88,6 +89,7 @@ object AppStrings {
         StringKey.STATUS_LABEL to "Status: %s",
         StringKey.APPROVE_BUTTON to "Approve",
         StringKey.REJECT_BUTTON to "Reject",
+        StringKey.TRIP_CANCELLED_SUCCESS to "Trip cancelled successfully",
         StringKey.MY_BOOKINGS_TITLE to "My Bookings",
         StringKey.NO_BOOKINGS_YET to "You haven't booked any rides yet",
         StringKey.RATE_DRIVER_BUTTON to "Rate Driver",
@@ -156,6 +158,7 @@ object AppStrings {
         StringKey.ACTIVE_TRIPS_LABEL to "Активни Пътувания",
         StringKey.NO_TRIPS_CREATED to "Все още няма създадени пътувания.",
         StringKey.FINISH_TRIP_BUTTON to "Завърши Пътуването",
+        StringKey.CANCEL_TRIP_BUTTON to "Откажи Пътуването",
         StringKey.BOOKING_REQUESTS_LABEL to "Заявки за Резервация",
         StringKey.NO_PENDING_REQUESTS to "Няма чакащи заявки",
         StringKey.PASSENGER_ID_LABEL to "ID на Пътник: %s",
@@ -163,6 +166,7 @@ object AppStrings {
         StringKey.STATUS_LABEL to "Статус: %s",
         StringKey.APPROVE_BUTTON to "Одобри",
         StringKey.REJECT_BUTTON to "Откажи",
+        StringKey.TRIP_CANCELLED_SUCCESS to "Пътуването е отказано успешно",
         StringKey.MY_BOOKINGS_TITLE to "Моите Резервации",
         StringKey.NO_BOOKINGS_YET to "Все още не сте резервирали пътувания",
         StringKey.RATE_DRIVER_BUTTON to "Оцени Шофьора",

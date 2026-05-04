@@ -30,6 +30,17 @@ class TravelViewModel : ViewModel() {
     private val userRepository = UserRepository()
     private val auth = FirebaseAuth.getInstance()
 
+    init {
+        // Auto-close trips that have passed their departure time on VM init
+        viewModelScope.launch {
+            try {
+                repository.autoCompleteExpiredTrips()
+            } catch (e: Exception) {
+                // Log error or ignore
+            }
+        }
+    }
+
     private val _originQuery = MutableStateFlow("")
     val originQuery = _originQuery.asStateFlow()
 
@@ -175,16 +186,40 @@ class TravelViewModel : ViewModel() {
     }
 
     /**
-     * Updates booking status (APPROVE/REJECT)
+     * Updates booking status (APPROVE/REJECT) and notifies the passenger.
      */
     fun updateBookingStatus(booking: Booking, status: BookingStatus) {
         viewModelScope.launch {
             _uiState.value = TravelState.Loading
             try {
                 repository.updateBookingStatus(booking.id, booking.tripId, status)
+                
+                // Task 6: Notify passenger
+                val message = if (status == BookingStatus.CONFIRMED) {
+                    "Your request for trip to ${booking.tripId} has been APPROVED!"
+                } else {
+                    "Your request for trip to ${booking.tripId} has been rejected."
+                }
+                repository.sendNotification(booking.passengerId, booking.tripId, message)
+                
                 _uiState.value = TravelState.Success
             } catch (e: Exception) {
                 _uiState.value = TravelState.Error(e.localizedMessage ?: "Update failed")
+            }
+        }
+    }
+
+    /**
+     * Cancels a trip from the driver's side.
+     */
+    fun cancelTrip(tripId: String) {
+        viewModelScope.launch {
+            _uiState.value = TravelState.Loading
+            try {
+                repository.cancelTrip(tripId)
+                _uiState.value = TravelState.Success
+            } catch (e: Exception) {
+                _uiState.value = TravelState.Error(e.localizedMessage ?: "Failed to cancel trip")
             }
         }
     }
@@ -196,9 +231,8 @@ class TravelViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = TravelState.Loading
             try {
-                // Perform both updates
-                userRepository.rateDriver(booking.driverId, rating)
-                repository.markBookingAsRated(booking.id)
+                // consolidated repository method handles both driver rating and booking flag
+                repository.submitReview(booking.id, booking.driverId, rating)
                 _uiState.value = TravelState.Success
             } catch (e: Exception) {
                 _uiState.value = TravelState.Error(e.localizedMessage ?: "Failed to submit rating")

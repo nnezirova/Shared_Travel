@@ -25,11 +25,12 @@ class TravelRepository {
 
     /**
      * Real-time stream of all available trips from Firestore.
+     * Modified to show only SCHEDULED or IN_PROGRESS trips.
      */
     fun getTripsFlow(): Flow<List<Trip>> = callbackFlow {
         val subscription = tripsCollection
-            .whereEqualTo("status", TripStatus.SCHEDULED.name)
-            .whereGreaterThan("availableSeats", 0) // Only show trips with seats
+            .whereIn("status", listOf(TripStatus.SCHEDULED.name, TripStatus.IN_PROGRESS.name))
+            .whereGreaterThan("availableSeats", 0)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -244,37 +245,126 @@ class TravelRepository {
     }
 
     /**
-     * Updates the status of a booking.
-     * If rejected, increments the available seats back.
+     * Cancels a trip and notifies all booked passengers.
+     */
+    suspend fun cancelTrip(tripId: String) = withContext(Dispatchers.IO) {
+        // 1. Update trip status
+        tripsCollection.document(tripId).update("status", TripStatus.CANCELLED.name).await()
+
+        // 2. Fetch all bookings for this trip to notify passengers
+        val bookings = bookingsCollection
+            .whereEqualTo("tripId", tripId)
+            .get()
+            .await()
+            .toObjects(Booking::class.java)
+
+        // 3. Update bookings to CANCELLED and notify
+        bookings.forEach { booking ->
+            bookingsCollection.document(booking.id).update("status", BookingStatus.CANCELLED.name).await()
+            
+            sendNotification(
+                passengerId = booking.passengerId,
+                tripId = tripId,
+                message = "The driver has cancelled the trip from ${booking.tripId}. Sorry for the inconvenience."
+            )
+        }
+    }
+
+    /**
+     * Logic for sending an in-app notification (stored in Firestore).
+     */
+    suspend fun sendNotification(passengerId: String, tripId: String, message: String) = withContext(Dispatchers.IO) {
+        val notificationId = notificationsCollection.document().id
+        val notification = Notification(
+            id = notificationId,
+            tripId = tripId,
+            passengerId = passengerId,
+            message = message,
+            isRead = false,
+            timestamp = System.currentTimeMillis()
+        )
+        notificationsCollection.document(notificationId).set(notification).await()
+    }
+
+    /**
+     * Automatically completes trips that have passed their departure time.
+     */
+    suspend fun autoCompleteExpiredTrips() = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        val expiredTrips = tripsCollection
+            .whereEqualTo("status", TripStatus.SCHEDULED.name)
+            .whereLessThan("departureTimestamp", now)
+            .get()
+            .await()
+            .toObjects(Trip::class.java)
+
+        expiredTrips.forEach { trip ->
+            completeTrip(trip.id)
+        }
+    }
+
+    /**
+     * Updates the status of a booking (CONFIRMED, REJECTED, CANCELLED).
+     * If rejected or cancelled, return the seats to the trip's available count.
      */
     suspend fun updateBookingStatus(
         bookingId: String,
         tripId: String,
         status: BookingStatus
     ) = withContext(Dispatchers.IO) {
-        val bookingRef = db.collection("bookings").document(bookingId)
-        val tripRef = db.collection("trips").document(tripId)
+        val bookingRef = bookingsCollection.document(bookingId)
+        val tripRef = tripsCollection.document(tripId)
 
         db.runTransaction { transaction ->
+            // 1. READ: Fetch the Booking document
             val bookingSnapshot = transaction.get(bookingRef)
+            if (!bookingSnapshot.exists()) return@runTransaction
             val seatsBooked = bookingSnapshot.getLong("seatsBooked") ?: 0L
 
-            // Update booking status
-            transaction.update(bookingRef, "status", status)
+            // 2. READ: Fetch the Trip document (Must be before any WRITE)
+            val tripSnapshot = transaction.get(tripRef)
 
-            // If REJECTED or CANCELLED, return seats to the trip
+            // 3. WRITE: Update booking status
+            transaction.update(bookingRef, "status", status.name)
+
+            // 4. WRITE: If REJECTED or CANCELLED, return seats to the trip available count
             if (status == BookingStatus.REJECTED || status == BookingStatus.CANCELLED) {
-                val tripSnapshot = transaction.get(tripRef)
-                val currentAvailable = tripSnapshot.getLong("availableSeats") ?: 0L
-                transaction.update(tripRef, "availableSeats", currentAvailable + seatsBooked)
+                if (tripSnapshot.exists()) {
+                    val currentAvailable = tripSnapshot.getLong("availableSeats") ?: 0L
+                    transaction.update(tripRef, "availableSeats", currentAvailable + seatsBooked)
+                }
             }
         }.await()
     }
+
     /**
-     * Marks a booking as rated.
+     * Submits a rating for the driver and marks the booking as rated atomically.
      */
-    suspend fun markBookingAsRated(bookingId: String) = withContext(Dispatchers.IO) {
-        db.collection("bookings").document(bookingId).update("isRated", true).await()
+    suspend fun submitReview(
+        bookingId: String,
+        driverId: String,
+        rating: Double
+    ) = withContext(Dispatchers.IO) {
+        val bookingRef = bookingsCollection.document(bookingId)
+        val userRef = db.collection("users").document(driverId)
+
+        db.runTransaction { transaction ->
+            // 1. Update Driver Profile Rating
+            val userSnapshot = transaction.get(userRef)
+            if (userSnapshot.exists()) {
+                val oldAverageRating = userSnapshot.getDouble("averageRating") ?: 5.0
+                val oldTotalReviews = userSnapshot.getLong("totalReviews") ?: 0L
+                
+                val newTotalReviews = oldTotalReviews + 1
+                val newAverageRating = ((oldAverageRating * oldTotalReviews) + rating) / newTotalReviews
+                
+                transaction.update(userRef, "averageRating", newAverageRating)
+                transaction.update(userRef, "totalReviews", newTotalReviews)
+            }
+
+            // 2. Mark the specific booking as rated so they can't rate again
+            transaction.update(bookingRef, "isRated", true)
+        }.await()
     }
     
 }

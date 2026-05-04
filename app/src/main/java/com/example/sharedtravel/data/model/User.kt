@@ -1,9 +1,8 @@
 package com.example.sharedtravel.data.model
 
-/**
- * Data class representing a User profile in the system.
- */
-data class User(
+import java.util.Locale
+
+data class User (
     val uid: String = "",
     val firstName: String = "",
     val lastName: String = "",
@@ -13,4 +12,5 @@ data class User(
     val drivingSinceYear: String = "",
     val averageRating: Double = 5.0,
     val totalReviews: Int = 0
+
 )

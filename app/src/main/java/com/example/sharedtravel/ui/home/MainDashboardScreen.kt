@@ -118,14 +118,15 @@ fun OfferRideScreen(viewModel: TravelViewModel = viewModel()) {
     var seats by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState) {
-        when (uiState) {
+        val state = uiState
+        when (state) {
             is TravelState.Success -> {
                 Toast.makeText(context, AppStrings.get(StringKey.RIDE_PUBLISHED_SUCCESS, currentLang), Toast.LENGTH_SHORT).show()
                 startLocation = ""; endLocation = ""; date = ""; time = ""; price = ""; seats = ""
                 viewModel.resetState()
             }
             is TravelState.Error -> {
-                Toast.makeText(context, (uiState as TravelState.Error).message, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 viewModel.resetState()
             }
             else -> {}
@@ -254,7 +255,8 @@ fun FindRideScreen(viewModel: TravelViewModel = viewModel()) {
     var selectedTrip by remember { mutableStateOf<Trip?>(null) }
 
     LaunchedEffect(uiState) {
-        when (uiState) {
+        val state = uiState
+        when (state) {
             is TravelState.Success -> {
                 if (selectedTrip != null) {
                     Toast.makeText(context, AppStrings.get(StringKey.BOOKING_SUCCESS, currentLang), Toast.LENGTH_SHORT).show()
@@ -263,7 +265,7 @@ fun FindRideScreen(viewModel: TravelViewModel = viewModel()) {
                 }
             }
             is TravelState.Error -> {
-                Toast.makeText(context, (uiState as TravelState.Error).message, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 viewModel.resetState()
             }
             else -> {}
@@ -526,7 +528,23 @@ fun TripCard(tripWithDriver: TripWithDriver, onBookClick: () -> Unit) {
 fun RequestsScreen(viewModel: TravelViewModel = viewModel()) {
     val trips by viewModel.driverTrips.collectAsState()
     val bookings by viewModel.driverBookings.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val currentLang = LocalLanguage.current
+
+    LaunchedEffect(uiState) {
+        val state = uiState
+        when (state) {
+            is TravelState.Success -> {
+                viewModel.resetState()
+            }
+            is TravelState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.resetState()
+            }
+            else -> {}
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(AppStrings.get(StringKey.DRIVER_DASHBOARD_TITLE, currentLang), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
@@ -541,23 +559,37 @@ fun RequestsScreen(viewModel: TravelViewModel = viewModel()) {
                     ElevatedCard(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         colors = CardDefaults.elevatedCardColors(
-                            containerColor = if (trip.status == TripStatus.COMPLETED) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.tertiaryContainer
+                            containerColor = when(trip.status) {
+                                TripStatus.COMPLETED -> MaterialTheme.colorScheme.surfaceVariant
+                                TripStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+                                else -> MaterialTheme.colorScheme.tertiaryContainer
+                            }
                         )
                     ) {
-                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("${trip.startLocation} -> ${trip.endLocation}", fontWeight = FontWeight.Bold)
-                                Text(
-                                    text = AppStrings.get(StringKey.STATUS_LABEL, currentLang).format(AppStrings.get(StatusMapper.mapTripStatusKey(trip.status), currentLang)), 
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                            if (trip.status == TripStatus.SCHEDULED) {
-                                Button(
-                                    onClick = { viewModel.completeTrip(trip.id) },
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
-                                ) {
-                                    Text(AppStrings.get(StringKey.FINISH_TRIP_BUTTON, currentLang))
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("${trip.startLocation} -> ${trip.endLocation}", fontWeight = FontWeight.Bold)
+                                    Text(
+                                        text = AppStrings.get(StringKey.STATUS_LABEL, currentLang).format(AppStrings.get(StatusMapper.mapTripStatusKey(trip.status), currentLang)), 
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                if (trip.status == TripStatus.SCHEDULED) {
+                                    Row {
+                                        TextButton(
+                                            onClick = { viewModel.cancelTrip(trip.id) },
+                                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                                        ) {
+                                            Text(AppStrings.get(StringKey.CANCEL_TRIP_BUTTON, currentLang))
+                                        }
+                                        Button(
+                                            onClick = { viewModel.completeTrip(trip.id) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                                        ) {
+                                            Text(AppStrings.get(StringKey.FINISH_TRIP_BUTTON, currentLang))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -633,11 +665,21 @@ fun BookingsScreen(viewModel: TravelViewModel = viewModel()) {
     var selectedBooking by remember { mutableStateOf<Booking?>(null) }
 
     LaunchedEffect(uiState) {
-        if (uiState is TravelState.Success && showRatingDialog) {
-            Toast.makeText(context, AppStrings.get(StringKey.RATING_SUCCESS, currentLang), Toast.LENGTH_SHORT).show()
-            showRatingDialog = false
-            selectedBooking = null
-            viewModel.resetState()
+        val state = uiState
+        when (state) {
+            is TravelState.Success -> {
+                if (showRatingDialog) {
+                    Toast.makeText(context, AppStrings.get(StringKey.RATING_SUCCESS, currentLang), Toast.LENGTH_SHORT).show()
+                    showRatingDialog = false
+                    selectedBooking = null
+                }
+                viewModel.resetState()
+            }
+            is TravelState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.resetState()
+            }
+            else -> {}
         }
     }
 
@@ -806,13 +848,14 @@ fun ProfileScreen(
     }
 
     LaunchedEffect(profileState) {
-        when (profileState) {
+        val state = profileState
+        when (state) {
             is ProfileState.Success -> {
                 Toast.makeText(context, AppStrings.get(StringKey.PROFILE_SAVED_SUCCESS, currentLang), Toast.LENGTH_SHORT).show()
                 viewModel.resetState()
             }
             is ProfileState.Error -> {
-                Toast.makeText(context, (profileState as ProfileState.Error).message, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
                 viewModel.resetState()
             }
             else -> {}
