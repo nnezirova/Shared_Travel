@@ -2,6 +2,7 @@ package com.example.sharedtravel.data.repository
 
 import com.example.sharedtravel.data.model.Booking
 import com.example.sharedtravel.data.model.BookingStatus
+import com.example.sharedtravel.data.model.Notification
 import com.example.sharedtravel.data.model.Trip
 import com.example.sharedtravel.data.model.TripStatus
 import com.google.firebase.firestore.FirebaseFirestore
@@ -11,7 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.util.UUID
 
 /**
  * Repository handling business logic for Trips and Bookings using Firestore.
@@ -20,6 +20,8 @@ class TravelRepository {
 
     private val db = FirebaseFirestore.getInstance()
     private val tripsCollection = db.collection("trips")
+    private val bookingsCollection = db.collection("bookings")
+    private val notificationsCollection = db.collection("notifications")
 
     /**
      * Real-time stream of all available trips from Firestore.
@@ -42,12 +44,49 @@ class TravelRepository {
     }
 
     /**
+     * Real-time stream of a single trip's status.
+     */
+    fun getTripFlow(tripId: String): Flow<Trip?> = callbackFlow {
+        val subscription = tripsCollection.document(tripId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    trySend(snapshot.toObject(Trip::class.java))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    /**
+     * Real-time stream of trips for a specific driver.
+     */
+    fun getDriverTripsFlow(driverId: String): Flow<List<Trip>> = callbackFlow {
+        val subscription = tripsCollection
+            .whereEqualTo("driverId", driverId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    trySend(snapshot.toObjects(Trip::class.java))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    /**
      * Creates a new Trip and saves it to Firestore.
      */
     suspend fun createTrip(
         driverId: String,
         startLocation: String,
         endLocation: String,
+        date: String,
+        time: String,
         departureTimestamp: Long,
         pricePerSeat: Double,
         totalSeats: Int
@@ -60,6 +99,8 @@ class TravelRepository {
             driverId = driverId,
             startLocation = startLocation,
             endLocation = endLocation,
+            date = date,
+            time = time,
             departureTimestamp = departureTimestamp,
             pricePerSeat = pricePerSeat,
             totalSeats = totalSeats,
@@ -69,6 +110,58 @@ class TravelRepository {
 
         tripsCollection.document(tripId).set(newTrip).await()
         newTrip
+    }
+
+    /**
+     * Completes a trip and notifies confirmed passengers.
+     */
+    suspend fun completeTrip(tripId: String) = withContext(Dispatchers.IO) {
+        // 1. Update trip status
+        tripsCollection.document(tripId).update("status", TripStatus.COMPLETED.name).await()
+
+        // 2. Fetch confirmed bookings to notify passengers
+        val confirmedBookings = bookingsCollection
+            .whereEqualTo("tripId", tripId)
+            .whereEqualTo("status", BookingStatus.CONFIRMED.name)
+            .get()
+            .await()
+            .toObjects(Booking::class.java)
+
+        // 3. Create notifications
+        confirmedBookings.forEach { booking ->
+            val notificationId = notificationsCollection.document().id
+            val notification = Notification(
+                id = notificationId,
+                tripId = tripId,
+                passengerId = booking.passengerId,
+                message = "Your trip has been completed. Please rate your driver.",
+                isRead = false
+            )
+            notificationsCollection.document(notificationId).set(notification).await()
+        }
+    }
+
+    /**
+     * Real-time stream of notifications for a specific passenger.
+     */
+    fun getNotificationsFlow(passengerId: String): Flow<List<Notification>> = callbackFlow {
+        val subscription = notificationsCollection
+            .whereEqualTo("passengerId", passengerId)
+            .whereEqualTo("isRead", false)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    trySend(snapshot.toObjects(Notification::class.java))
+                }
+            }
+        awaitClose { subscription.remove() }
+    }
+
+    suspend fun markNotificationAsRead(notificationId: String): Unit = withContext(Dispatchers.IO) {
+        notificationsCollection.document(notificationId).update("isRead", true).await()
     }
 
     /**
@@ -176,6 +269,12 @@ class TravelRepository {
                 transaction.update(tripRef, "availableSeats", currentAvailable + seatsBooked)
             }
         }.await()
+    }
+    /**
+     * Marks a booking as rated.
+     */
+    suspend fun markBookingAsRated(bookingId: String) = withContext(Dispatchers.IO) {
+        db.collection("bookings").document(bookingId).update("isRated", true).await()
     }
     
 }

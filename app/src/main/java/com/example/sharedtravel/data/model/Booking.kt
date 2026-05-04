@@ -20,5 +20,6 @@ data class Booking(
     val driverId: String = "",
     val seatsBooked: Int = 0,
     val timestamp: Long = System.currentTimeMillis(),
-    val status: BookingStatus = BookingStatus.PENDING
+    val status: BookingStatus = BookingStatus.PENDING,
+    val isRated: Boolean = false
 )

@@ -18,6 +18,8 @@ data class Trip(
     val driverId: String = "",
     val startLocation: String = "",
     val endLocation: String = "",
+    val date: String = "",
+    val time: String = "",
     val departureTimestamp: Long = 0L,
     val pricePerSeat: Double = 0.0,
     val totalSeats: Int = 0,

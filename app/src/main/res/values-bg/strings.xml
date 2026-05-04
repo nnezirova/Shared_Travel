@@ -1,0 +1,93 @@
+<resources>
+    <string name="app_name">Shared Travel</string>
+    <string name="title_activity_login">Вход</string>
+
+    <!-- Navigation -->
+    <string name="nav_find">Търсене</string>
+    <string name="nav_offer">Предлагане</string>
+    <string name="nav_requests">Заявки</string>
+    <string name="nav_bookings">Резервации</string>
+    <string name="nav_profile">Профил</string>
+
+    <!-- Auth -->
+    <string name="login_title">Вход</string>
+    <string name="register_title">Регистрация</string>
+    <string name="email_label">Имейл</string>
+    <string name="password_label">Парола</string>
+    <string name="login_button">Влез</string>
+    <string name="no_account_text">Нямате акаунт? Регистрирайте се</string>
+    <string name="already_account_text">Вече имате акаунт? Влезте</string>
+    <string name="login_success">Успешен вход!</string>
+    <string name="register_success">Успешна регистрация!</string>
+    <string name="logout_button">Изход</string>
+
+    <!-- Offer Ride -->
+    <string name="offer_ride_title">Предложи Пътуване</string>
+    <string name="from_origin_label">От (Начална точка)</string>
+    <string name="to_destination_label">До (Крайна точка)</string>
+    <string name="date_label">Дата</string>
+    <string name="time_label">Час</string>
+    <string name="price_label">Цена</string>
+    <string name="seats_label">Места</string>
+    <string name="publish_ride_button">Публикувай Пътуване</string>
+    <string name="ride_published_success">Пътуването е публикувано успешно!</string>
+    <string name="fill_all_fields_error">Моля, попълнете всички полета</string>
+
+    <!-- Find Ride -->
+    <string name="find_ride_title">Намери Пътуване</string>
+    <string name="no_rides_found">Няма намерени пътувания за този маршрут.</string>
+    <string name="confirm_booking_title">Потвърди Резервация</string>
+    <string name="confirm_booking_text">Сигурни ли сте, че искате да резервирате място за пътуването от %1$s до %2$s?</string>
+    <string name="confirm_button">Потвърди</string>
+    <string name="cancel_button">Отказ</string>
+    <string name="book_now_button">Резервирай</string>
+    <string name="your_trip_label">Твое Пътуване</string>
+    <string name="seats_left_format">остават %1$d места</string>
+    <string name="per_seat_label">на място</string>
+    <string name="driving_since_format">Шофира от: %1$s</string>
+    <string name="booking_success">Мястото е резервирано успешно!</string>
+
+    <!-- Requests -->
+    <string name="driver_dashboard_title">Табло на Шофьора</string>
+    <string name="active_trips_label">Активни Пътувания</string>
+    <string name="no_trips_created">Все още няма създадени пътувания.</string>
+    <string name="finish_trip_button">Завърши Пътуването</string>
+    <string name="booking_requests_label">Заявки за Резервация</string>
+    <string name="no_pending_requests">Няма чакащи заявки</string>
+    <string name="passenger_id_label">ID на Пътник: %1$s</string>
+    <string name="seats_requested_label">Заявени места: %1$d</string>
+    <string name="status_label">Статус: %1$s</string>
+    <string name="approve_button">Одобри</string>
+    <string name="reject_button">Откажи</string>
+
+    <!-- Bookings -->
+    <string name="my_bookings_title">Моите Резервации</string>
+    <string name="no_bookings_yet">Все още не сте резервирали пътувания</string>
+    <string name="rate_driver_button">Оцени Шофьора</string>
+    <string name="already_rated_label">Вече е оценено</string>
+    <string name="rating_dialog_title">Оцени Шофьора</string>
+    <string name="rating_dialog_text">Как беше твоето пътуване?</string>
+    <string name="submit_button">Изпрати</string>
+    <string name="rating_success">Благодарим за вашата оценка!</string>
+
+    <!-- Profile -->
+    <string name="my_profile_title">Моят Профил</string>
+    <string name="first_name_label">Име</string>
+    <string name="last_name_label">Фамилия</string>
+    <string name="driving_since_year_label">Шофира от (Година)</string>
+    <string name="save_profile_button">Запази Профила</string>
+    <string name="profile_saved_success">Профилът е запазен успешно!</string>
+    <string name="names_blank_error">Имената не могат да бъдат празни</string>
+    <string name="reviews_count_format">(%1$d отзива)</string>
+
+    <!-- Statuses -->
+    <string name="status_pending">ЧАКАЩО</string>
+    <string name="status_confirmed">ПОТВЪРДЕНО</string>
+    <string name="status_rejected">ОТКАЗАНО</string>
+    <string name="status_cancelled">ОТМЕНЕНО</string>
+    <string name="status_scheduled">ПЛАНИРАНО</string>
+    <string name="status_completed">ЗАВЪРШЕНО</string>
+
+    <!-- Language -->
+    <string name="language_switcher_label">Language / Език</string>
+</resources>
