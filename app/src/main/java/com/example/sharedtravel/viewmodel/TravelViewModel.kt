@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sharedtravel.data.model.Booking
 import com.example.sharedtravel.data.model.BookingStatus
+import com.example.sharedtravel.data.model.Notification
 import com.example.sharedtravel.data.model.Trip
+import com.example.sharedtravel.data.model.User
 import com.example.sharedtravel.data.repository.TravelRepository
+import com.example.sharedtravel.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,8 +20,14 @@ sealed class TravelState {
     data class Error(val message: String) : TravelState()
 }
 
+data class TripWithDriver(
+    val trip: Trip,
+    val driver: User?
+)
+
 class TravelViewModel : ViewModel() {
     private val repository = TravelRepository()
+    private val userRepository = UserRepository()
     private val auth = FirebaseAuth.getInstance()
 
     private val _originQuery = MutableStateFlow("")
@@ -31,7 +40,8 @@ class TravelViewModel : ViewModel() {
     private val allTrips: Flow<List<Trip>> = repository.getTripsFlow()
 
     // Filtered stream: Updates whenever the database OR the search queries change
-    val filteredTrips: StateFlow<List<Trip>> = combine(
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val filteredTrips: StateFlow<List<TripWithDriver>> = combine(
         allTrips,
         _originQuery,
         _destinationQuery
@@ -39,6 +49,14 @@ class TravelViewModel : ViewModel() {
         trips.filter { trip ->
             trip.startLocation.contains(origin, ignoreCase = true) &&
             trip.endLocation.contains(destination, ignoreCase = true)
+        }
+    }.flatMapLatest { trips ->
+        flow {
+            val joined = trips.map { trip ->
+                val driver = userRepository.getUserProfile(trip.driverId)
+                TripWithDriver(trip, driver)
+            }
+            emit(joined)
         }
     }.stateIn(
         scope = viewModelScope,
@@ -52,9 +70,21 @@ class TravelViewModel : ViewModel() {
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     } ?: MutableStateFlow(emptyList())
 
+    // Real-time stream of trips for current user as a Driver
+    val driverTrips: StateFlow<List<Trip>> = auth.currentUser?.uid?.let { uid ->
+        repository.getDriverTripsFlow(uid)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    } ?: MutableStateFlow(emptyList())
+
     // Real-time stream of bookings for current user as a Passenger
     val passengerBookings: StateFlow<List<Booking>> = auth.currentUser?.uid?.let { uid ->
         repository.getPassengerBookingsFlow(uid)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    } ?: MutableStateFlow(emptyList())
+
+    // Real-time stream of notifications
+    val notifications: StateFlow<List<Notification>> = auth.currentUser?.uid?.let { uid ->
+        repository.getNotificationsFlow(uid)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     } ?: MutableStateFlow(emptyList())
 
@@ -69,13 +99,15 @@ class TravelViewModel : ViewModel() {
     fun createTrip(
         startLocation: String,
         endLocation: String,
+        date: String,
+        time: String,
         price: String,
         seats: String
     ) {
         val driverId = auth.currentUser?.uid ?: return
         
         // Basic validation
-        if (startLocation.isBlank() || endLocation.isBlank() || price.isBlank() || seats.isBlank()) {
+        if (startLocation.isBlank() || endLocation.isBlank() || price.isBlank() || seats.isBlank() || date.isBlank() || time.isBlank()) {
             _uiState.value = TravelState.Error("Please fill all fields")
             return
         }
@@ -87,7 +119,9 @@ class TravelViewModel : ViewModel() {
                     driverId = driverId,
                     startLocation = startLocation,
                     endLocation = endLocation,
-                    departureTimestamp = System.currentTimeMillis(), // For now
+                    date = date,
+                    time = time,
+                    departureTimestamp = System.currentTimeMillis(), // Fallback
                     pricePerSeat = price.toDoubleOrNull() ?: 0.0,
                     totalSeats = seats.toIntOrNull() ?: 0
                 )
@@ -96,6 +130,31 @@ class TravelViewModel : ViewModel() {
                 _uiState.value = TravelState.Error(e.localizedMessage ?: "Failed to create trip")
             }
         }
+    }
+
+    fun completeTrip(tripId: String) {
+        viewModelScope.launch {
+            _uiState.value = TravelState.Loading
+            try {
+                repository.completeTrip(tripId)
+                _uiState.value = TravelState.Success
+            } catch (e: Exception) {
+                _uiState.value = TravelState.Error(e.localizedMessage ?: "Failed to complete trip")
+            }
+        }
+    }
+
+    fun markNotificationAsRead(notificationId: String) {
+        viewModelScope.launch {
+            repository.markNotificationAsRead(notificationId)
+        }
+    }
+
+    /**
+     * Get a real-time flow for a single trip status.
+     */
+    fun getTripFlow(tripId: String): Flow<Trip?> {
+        return repository.getTripFlow(tripId)
     }
 
     /**
@@ -126,6 +185,23 @@ class TravelViewModel : ViewModel() {
                 _uiState.value = TravelState.Success
             } catch (e: Exception) {
                 _uiState.value = TravelState.Error(e.localizedMessage ?: "Update failed")
+            }
+        }
+    }
+
+    /**
+     * Submits a rating for the driver.
+     */
+    fun submitReview(booking: Booking, rating: Double) {
+        viewModelScope.launch {
+            _uiState.value = TravelState.Loading
+            try {
+                // Perform both updates
+                userRepository.rateDriver(booking.driverId, rating)
+                repository.markBookingAsRated(booking.id)
+                _uiState.value = TravelState.Success
+            } catch (e: Exception) {
+                _uiState.value = TravelState.Error(e.localizedMessage ?: "Failed to submit rating")
             }
         }
     }

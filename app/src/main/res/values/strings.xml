@@ -1,4 +1,93 @@
 <resources>
     <string name="app_name">Shared Travel</string>
-    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_login">Login</string>
+
+    <!-- Navigation -->
+    <string name="nav_find">Find</string>
+    <string name="nav_offer">Offer</string>
+    <string name="nav_requests">Requests</string>
+    <string name="nav_bookings">Bookings</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Auth -->
+    <string name="login_title">Login</string>
+    <string name="register_title">Register</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="login_button">Login</string>
+    <string name="no_account_text">Don\'t have an account? Register</string>
+    <string name="already_account_text">Already have an account? Login</string>
+    <string name="login_success">Login Successful!</string>
+    <string name="register_success">Registration Successful!</string>
+    <string name="logout_button">Sign Out</string>
+
+    <!-- Offer Ride -->
+    <string name="offer_ride_title">Offer a Ride</string>
+    <string name="from_origin_label">From (Origin)</string>
+    <string name="to_destination_label">To (Destination)</string>
+    <string name="date_label">Date</string>
+    <string name="time_label">Time</string>
+    <string name="price_label">Price</string>
+    <string name="seats_label">Seats</string>
+    <string name="publish_ride_button">Publish Ride</string>
+    <string name="ride_published_success">Ride Published Successfully!</string>
+    <string name="fill_all_fields_error">Please fill all fields</string>
+
+    <!-- Find Ride -->
+    <string name="find_ride_title">Find a Ride</string>
+    <string name="no_rides_found">No rides found for this route.</string>
+    <string name="confirm_booking_title">Confirm Booking</string>
+    <string name="confirm_booking_text">Are you sure you want to book a seat for the ride from %1$s to %2$s?</string>
+    <string name="confirm_button">Confirm</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="book_now_button">Book Now</string>
+    <string name="your_trip_label">Your Trip</string>
+    <string name="seats_left_format">%1$d seats left</string>
+    <string name="per_seat_label">per seat</string>
+    <string name="driving_since_format">Driving since: %1$s</string>
+    <string name="booking_success">Seat booked successfully!</string>
+
+    <!-- Requests -->
+    <string name="driver_dashboard_title">Driver Dashboard</string>
+    <string name="active_trips_label">Active Trips</string>
+    <string name="no_trips_created">No trips created yet.</string>
+    <string name="finish_trip_button">Finish Trip</string>
+    <string name="booking_requests_label">Booking Requests</string>
+    <string name="no_pending_requests">No pending requests</string>
+    <string name="passenger_id_label">Passenger ID: %1$s</string>
+    <string name="seats_requested_label">Seats requested: %1$d</string>
+    <string name="status_label">Status: %1$s</string>
+    <string name="approve_button">Approve</string>
+    <string name="reject_button">Reject</string>
+
+    <!-- Bookings -->
+    <string name="my_bookings_title">My Bookings</string>
+    <string name="no_bookings_yet">You haven\'t booked any rides yet</string>
+    <string name="rate_driver_button">Rate Driver</string>
+    <string name="already_rated_label">Already Rated</string>
+    <string name="rating_dialog_title">Rate Driver</string>
+    <string name="rating_dialog_text">How was your trip?</string>
+    <string name="submit_button">Submit</string>
+    <string name="rating_success">Thank you for your rating!</string>
+
+    <!-- Profile -->
+    <string name="my_profile_title">My Profile</string>
+    <string name="first_name_label">First Name</string>
+    <string name="last_name_label">Last Name</string>
+    <string name="driving_since_year_label">Driving Since (Year)</string>
+    <string name="save_profile_button">Save Profile</string>
+    <string name="profile_saved_success">Profile saved successfully!</string>
+    <string name="names_blank_error">Names cannot be blank</string>
+    <string name="reviews_count_format">(%1$d reviews)</string>
+
+    <!-- Statuses -->
+    <string name="status_pending">PENDING</string>
+    <string name="status_confirmed">CONFIRMED</string>
+    <string name="status_rejected">REJECTED</string>
+    <string name="status_cancelled">CANCELLED</string>
+    <string name="status_scheduled">SCHEDULED</string>
+    <string name="status_completed">COMPLETED</string>
+
+    <!-- Language -->
+    <string name="language_switcher_label">Language / Език</string>
 </resources>
